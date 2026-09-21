@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 946b07fc5c3db2b49ac39304a15ed31f, type: 3}
+  m_Name: Seed
+  m_EditorClassIdentifier: 
+  id: 31
+  itemName: Chicken
+  itemIcon: {fileID: 21300000, guid: 8ec92a764dc7d26cd9f40220460eb52f, type: 3}
+  sellPrice: -1
+  seedData: {fileID: 11400000, guid: 0c594861972c8071ee91724040b6c90f, type: 2}

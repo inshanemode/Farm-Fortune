@@ -19,7 +19,7 @@ class AssignFarmState : BaseState
         base.UpdateLogic();
         //Check for mouse click
         if (EventSystem.current.IsPointerOverGameObject()) return;
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButtonDown(0))
         {
             Vector2 mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
             Land land = LandManager.GetLand(mousePos, Global.LAND_DETECTION_SIZE);
@@ -27,6 +27,16 @@ class AssignFarmState : BaseState
             {
                 OnLandClick harvestEvent = new OnLandClick(land, LandAction.HARVEST, null, input.targetPlayer); 
                 EventManager.TriggerEvent(harvestEvent);
+            }
+        }
+        if (Input.GetMouseButtonDown(1))
+        {
+            Vector2 mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
+            Land land = LandManager.GetLand(mousePos, Global.LAND_DETECTION_SIZE);
+            if (land != null && !land.IsLandEmpty())
+            {
+                OnLandClick removeEvent = new OnLandClick(land, LandAction.REMOVE, null, input.targetPlayer);
+                EventManager.TriggerEvent(removeEvent);
             }
         }
         if (Input.GetMouseButtonDown(0))

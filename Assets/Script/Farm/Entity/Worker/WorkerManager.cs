@@ -4,15 +4,36 @@ using UnityEngine;
 
 public class WorkerManager : MonoBehaviour
 {
+    public enum WorkerTask
+    {
+        Manual,
+        PlantOnly,
+        HarvestOnly,
+        PlantAndHarvest
+    }
+
     public GameObject workerPrefab;
 
     private List<WorkerEntity> workerList;
     private Player targetPlayer;
+    public IReadOnlyList<WorkerEntity> Workers => workerList;
 
     private void Awake()
     {
         workerList = new List<WorkerEntity>();
         targetPlayer = GetComponent<Player>();
+    }
+
+    public void SetTask(WorkerEntity worker, WorkerTask task)
+    {
+        if (worker == null || !workerList.Contains(worker)) return;
+        worker.SetTask(task);
+    }
+
+    public void SetSeed(WorkerEntity worker, SeedItem seed)
+    {
+        if (worker == null || !workerList.Contains(worker)) return;
+        worker.SetSeed(seed);
     }
 
     private void OnEnable()

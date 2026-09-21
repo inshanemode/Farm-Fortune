@@ -15,4 +15,4 @@ MonoBehaviour:
   id: 7
   itemName: Milk Bucket
   itemIcon: {fileID: 21300000, guid: 53d0ff637c46c6540bac7699a8fa1b33, type: 3}
-  sellPrice: 100
+  sellPrice: 120

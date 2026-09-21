@@ -5,6 +5,14 @@ public class ItemStock : ShopStock
 {
     public Item item;
     public int buyAmount = 10;
+    [Tooltip("Use Animals for livestock such as cows; otherwise use the selected shop category.")]
+    public bool isAnimalStock;
+    public ShopCategory category = ShopCategory.Seeds;
+
+    public override ShopCategory GetCategory()
+    {
+        return isAnimalStock ? ShopCategory.Animals : category;
+    }
 
     public override string GetStockName()
     {
@@ -16,7 +24,7 @@ public class ItemStock : ShopStock
         string res = $"Price: {buyPrice} coins / {buyAmount} units";
         if(item is SeedItem)
         {
-            res += "\n\nDrag to soil to plant these seeds";
+            res += "\n\nClick a seed, then click empty soil to plant\nYou can also drag it to the soil";
         }
         return res;
     }

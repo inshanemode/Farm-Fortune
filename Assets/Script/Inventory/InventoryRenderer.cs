@@ -35,6 +35,12 @@ public class InventoryRenderer : MonoBehaviour
             itemRenderers[i] = newPrefab.GetComponent<ItemRenderer>();
         }
         grid = itemHolder.GetComponent<GridLayoutGroup>();
+
+        if (extendButton != null)
+        {
+            RectTransform buttonRect = extendButton.GetComponent<RectTransform>();
+            if (buttonRect != null) buttonRect.sizeDelta = new Vector2(70f, 70f);
+        }
         
         SetExtend();
 

@@ -15,8 +15,8 @@ MonoBehaviour:
   entityPrefab: {fileID: 7980034589795436813, guid: c78ec53496c00c347bb66f651e72cbca, type: 3}
   harvestItem: {fileID: 11400000, guid: 44ce762edef4b48428695702e5f0cca3, type: 2}
   harvestItemAmount: 1
-  timeToHarvest: 600
-  totalHarvest: 40
+  timeToHarvest: 30
+  totalHarvest: 6
   timeToDecompose: 300
   plantSprites:
   - {fileID: -1077530975, guid: 53443749b08981c48a9a02a4855214c8, type: 3}

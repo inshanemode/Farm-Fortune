@@ -2016,6 +2016,18 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8f900c64503655240838697be380bd93, type: 2}
   - {fileID: 11400000, guid: 44ce762edef4b48428695702e5f0cca3, type: 2}
   - {fileID: 11400000, guid: b43b8253d0e5de3499e388416a6a021d, type: 2}
+  - {fileID: 11400000, guid: 527243bdb5864a3b8092dd0d6c35518b, type: 2}
+  - {fileID: 11400000, guid: cf7899e551c54809b5899831c2916bb6, type: 2}
+  - {fileID: 11400000, guid: b1011111111111111111111111111111, type: 2}
+  - {fileID: 11400000, guid: b1031111111111111111111111111111, type: 2}
+  - {fileID: 11400000, guid: c1011111111111111111111111111111, type: 2}
+  - {fileID: 11400000, guid: c1031111111111111111111111111111, type: 2}
+  - {fileID: 11400000, guid: c2011111111111111111111111111111, type: 2}
+  - {fileID: 11400000, guid: c2031111111111111111111111111111, type: 2}
+  - {fileID: 11400000, guid: c3011111111111111111111111111111, type: 2}
+  - {fileID: 11400000, guid: c3031111111111111111111111111111, type: 2}
+  - {fileID: 11400000, guid: c4011111111111111111111111111111, type: 2}
+  - {fileID: 11400000, guid: c4031111111111111111111111111111, type: 2}
 --- !u!4 &665115565
 Transform:
   m_ObjectHideFlags: 0
@@ -3199,6 +3211,19 @@ MonoBehaviour:
   - {fileID: 11400000, guid: fbdb7e24db05c10439c5f1ca13284eeb, type: 2}
   - {fileID: 11400000, guid: 6938fa59ccdc8984d95a604b6842abb5, type: 2}
   - {fileID: 11400000, guid: 60cc2f3c16375c54caa278f526f1697f, type: 2}
+  - {fileID: 11400000, guid: ea04b03e022f4d37890ad1e584585b62, type: 2}
+  - {fileID: 11400000, guid: b1041111111111111111111111111111, type: 2}
+  - {fileID: 11400000, guid: c1041111111111111111111111111111, type: 2}
+  - {fileID: 11400000, guid: c2041111111111111111111111111111, type: 2}
+  - {fileID: 11400000, guid: c3041111111111111111111111111111, type: 2}
+  - {fileID: 11400000, guid: c4041111111111111111111111111111, type: 2}
+  - {fileID: 11400000, guid: b0831abe04966c4cd357699b2a3a333a, type: 2}
+  - {fileID: 11400000, guid: 5ac539e72d089bfd26b02dc931f0b820, type: 2}
+  - {fileID: 11400000, guid: 3f8afb66c7f409ce93b1b80545622f2c, type: 2}
+  - {fileID: 11400000, guid: 1a3e84142284a71d483a4799fb0f8495, type: 2}
+  - {fileID: 11400000, guid: a518a0ffd7c5315c98a72054d2af1a90, type: 2}
+  - {fileID: 11400000, guid: f4513f809384e5079ce081ec266b595f, type: 2}
+  - {fileID: 11400000, guid: 80513d2eaff0c14ec991335f941baadd, type: 2}
   shopRenderer: {fileID: 1519468944}
   sellColor: {r: 1, g: 1, b: 1, a: 1}
   buyColor: {r: 1, g: 0.9011155, b: 0.23921567, a: 1}
@@ -4002,7 +4027,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1260453236
 RectTransform:
   m_ObjectHideFlags: 0
@@ -36878,7 +36903,7 @@ MonoBehaviour:
   startWorker: 1
   startLand: 3
   startToolLevel: 1
-  startMoney: 0
+  startMoney: 200000
   currentState: 0
 --- !u!1 &1717577420
 GameObject:
@@ -37713,10 +37738,10 @@ MonoBehaviour:
   m_Horizontal: 0
   m_Vertical: 1
   m_MovementType: 1
-  m_Elasticity: 0.1
+  m_Elasticity: 0.12
   m_Inertia: 1
-  m_DecelerationRate: 0.135
-  m_ScrollSensitivity: 1
+  m_DecelerationRate: 0.065
+  m_ScrollSensitivity: 35
   m_Viewport: {fileID: 700521065}
   m_HorizontalScrollbar: {fileID: 0}
   m_VerticalScrollbar: {fileID: 0}

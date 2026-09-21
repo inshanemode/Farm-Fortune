@@ -25,7 +25,6 @@ public class CursorRenderer : MonoBehaviour
     private Player targetPlayer;
 
     private Camera uiCamera;
-    private bool isPressed = false;
 
     void Start()
     {
@@ -35,6 +34,19 @@ public class CursorRenderer : MonoBehaviour
             return;
         }
         Instance = this;
+
+        // Use the native macOS/Unity cursor instead of drawing a second cursor in-game.
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+        Cursor.visible = true;
+        if (cursorSprite != null)
+        {
+            cursorSprite.gameObject.SetActive(false);
+            cursorSprite.raycastTarget = false;
+        }
+        if (itemSprite != null)
+        {
+            itemSprite.raycastTarget = false;
+        }
 
         uiCamera = Camera.main;
         targetPlayer = Player.main;
@@ -57,18 +69,17 @@ public class CursorRenderer : MonoBehaviour
     private void OnItemPickUp(EventParam param)
     {
         OnItemPickUp eventParam = param as OnItemPickUp;
-        if (!eventParam.player.Equals(targetPlayer)) return;
+        if (eventParam == null || eventParam.player != targetPlayer || itemSprite == null) return;
         itemSprite.gameObject.SetActive(true);
-        cursorSprite.gameObject.SetActive(false);
+        if (cursorSprite != null) cursorSprite.gameObject.SetActive(false);
         itemSprite.sprite = eventParam.item.itemIcon;
     }
 
     private void OnItemDrop(EventParam param)
     {
         OnItemDrop eventParam = param as OnItemDrop;
-        if (!eventParam.player.Equals(targetPlayer)) return;
+        if (eventParam == null || eventParam.player != targetPlayer || itemSprite == null) return;
         itemSprite.gameObject.SetActive(false);
-        cursorSprite.gameObject.SetActive(true);
     }
 
     private void OnCursorMessageRequest(EventParam param)
@@ -101,18 +112,17 @@ public class CursorRenderer : MonoBehaviour
 
     void Update()
     {
-        Cursor.visible = false;
+        // Keep the native system cursor visible at all times.
+        Cursor.visible = true;
+
+        if (uiCamera == null) uiCamera = Camera.main;
+        if (uiCamera == null) return;
 
         Vector3 pos = Input.mousePosition;
         pos.z = uiCamera.transform.position.z;
         transform.position = pos;
 
-        bool isPressedCurrent = Input.GetMouseButton(0);
-        if(isPressed != isPressedCurrent)
-        {
-            isPressed = isPressedCurrent;
-            if (isPressed) cursorSprite.sprite = pressCursor;
-            else cursorSprite.sprite = normalCursor;
-        }
+        // The root still follows the mouse so tooltip messages and dragged items
+        // remain positioned correctly, while the custom cursor icon stays hidden.
     }
 }

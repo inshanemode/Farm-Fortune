@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -9,34 +7,44 @@ public class MenuRenderer : MonoBehaviour
     public Button startButton;
     public Button continueButton;
     public Button exitButton;
+
     void Start()
     {
-        exitButton.onClick.AddListener(() =>
+        if (exitButton != null)
         {
-            Application.Quit();
-        });
-        int init = PlayerPrefs.GetInt("Init");
-        if (init < 1)
+            exitButton.onClick.AddListener(() =>
+            {
+                Application.Quit();
+            });
+        }
+
+        bool hasSave = SaveSystem.HasSave();
+        if (!hasSave)
         {
-            Destroy(continueButton.gameObject);
+            if (continueButton != null)
+            {
+                Destroy(continueButton.gameObject);
+            }
         }
         else
         {
-            continueButton.onClick.AddListener(() =>
+            if (continueButton != null)
             {
+                continueButton.onClick.AddListener(() =>
+                {
+                    SaveSystem.ClearNewGameRequest();
+                    SceneManager.LoadScene(1);
+                });
+            }
+        }
+
+        if (startButton != null)
+        {
+            startButton.onClick.AddListener(() =>
+            {
+                SaveSystem.RequestNewGame();
                 SceneManager.LoadScene(1);
             });
         }
-        startButton.onClick.AddListener(() =>
-        {
-            PlayerPrefs.SetInt("Init", 0);
-            SceneManager.LoadScene(1);
-        });
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }

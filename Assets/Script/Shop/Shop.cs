@@ -63,7 +63,7 @@ public class Shop : Interactable
         EventManager.StopListening<OnItemDrop>(OnItemDrop);
         EventManager.StopListening<OnItemPickUp>(OnItemPickUp);
         EventManager.StopListening<OnInventoryUpdate>(OnInventoryUpdate);
-        EventManager.StartListening<OnPlayerClick>(OnPlayerClick);
+        EventManager.StopListening<OnPlayerClick>(OnPlayerClick);
     }
 
     protected override void OnMouseEnter()
@@ -123,8 +123,8 @@ public class Shop : Interactable
         if (eventParam.player.Equals(Player.main))
         {
             itemPicked = null;
-            //Check for dropping inside the shop for main player if not return
-            if (!isInteractable) return;
+            Collider2D shopCollider = GetComponent<Collider2D>();
+            if (shopCollider == null || !shopCollider.OverlapPoint(eventParam.dropPosition)) return;
         }
 
         //Check the item is on sell

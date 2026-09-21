@@ -1,10 +1,15 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 [CreateAssetMenu(fileName = "Land Stock", menuName = "Shop/Create Tool Item", order = 1)]
 public class ToolStock : ShopStock
 {
     public Sprite toolSprite;
     public int buyAmount = 1;
+
+    public override ShopCategory GetCategory()
+    {
+        return ShopCategory.Upgrades;
+    }
 
     public override string GetStockName()
     {
@@ -24,8 +29,16 @@ public class ToolStock : ShopStock
         return toolSprite;
     }
 
+    public int maxToolLevel = 10;
+
+    public override bool IsMaxed(Player player)
+    {
+        return player != null && player.toolLevel >= maxToolLevel;
+    }
+
     public override void AddStock(Player player)
     {
         player.AddToolLevel(1);
     }
 }
+

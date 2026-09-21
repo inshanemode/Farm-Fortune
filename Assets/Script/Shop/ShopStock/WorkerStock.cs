@@ -6,6 +6,11 @@ public class WorkerStock : ShopStock
     public Sprite workerSprite;
     public int buyAmount = 10;
 
+    public override ShopCategory GetCategory()
+    {
+        return ShopCategory.Upgrades;
+    }
+
     public override string GetStockName()
     {
         return "Worker";

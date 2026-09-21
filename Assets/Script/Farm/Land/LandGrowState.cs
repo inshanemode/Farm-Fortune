@@ -25,6 +25,11 @@ public class LandGrowState : BaseState
         if (!eventParam.player.Equals(land.owner)) return;
 
         if (eventParam.land != land) return;
+        if (eventParam.action == LandAction.REMOVE)
+        {
+            land.ChangeState("LandFreeState");
+            return;
+        }
         if (eventParam.action != LandAction.HARVEST) return;
         if (land.GetProgress() >= 1)
         {

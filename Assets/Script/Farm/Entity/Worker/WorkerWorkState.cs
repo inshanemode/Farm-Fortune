@@ -1,9 +1,10 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class WorkerWorkState : BaseState
 {
     private WorkerEntity entity;
     private float currentWorkTime;
+    public float Progress => (entity != null && entity.workTime > 0) ? Mathf.Clamp01(currentWorkTime / entity.workTime) : 0f;
     public WorkerWorkState(WorkerEntity entity) : base("WorkerWorkState")
     {
         this.entity = entity;
@@ -42,7 +43,15 @@ public class WorkerWorkState : BaseState
             entity.ResetState();
             return;
         }
-        SeedItem seedItem = entity.owner.inventory.GetItemByType<SeedItem>();
+        bool canWork =
+            (entity.CanPlant && entity.currentLand.IsLandEmpty()) ||
+            (entity.CanHarvest && (entity.currentLand.ReadyToHarvest() || entity.currentLand.IsLandDecompose()));
+        if (!canWork)
+        {
+            entity.ResetState();
+            return;
+        }
+        SeedItem seedItem = entity.SelectedSeed;
         if (!(entity.currentLand.IsLandEmpty() && seedItem != null) && !entity.currentLand.ReadyToHarvest() && !entity.currentLand.IsLandDecompose())
         {
             entity.ResetState();
@@ -54,6 +63,7 @@ public class WorkerWorkState : BaseState
         {
             //Finish working
             Work();
+            FeedbackManager.Instance?.NotifyWorkerCompleted(entity);
             entity.ResetState();
             return;
         }
@@ -63,8 +73,8 @@ public class WorkerWorkState : BaseState
     {
         if(entity.currentLand.IsLandEmpty())
         {
-            SeedItem seedItem = entity.owner.inventory.GetItemByType<SeedItem>();
-            if (seedItem == null) return;
+            SeedItem seedItem = entity.SelectedSeed;
+            if (seedItem == null || entity.owner.inventory.GetAmount(seedItem) <= 0) return;
             OnItemDrop drop = new OnItemDrop(seedItem, entity.owner, entity.currentLand.transform.position);
             EventManager.TriggerEvent(drop);
         }

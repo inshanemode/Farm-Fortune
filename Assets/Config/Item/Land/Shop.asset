@@ -15,3 +15,5 @@ MonoBehaviour:
   buyPrice: 500
   landSprite: {fileID: -1007545506, guid: 01db4ed59ce06024fa27e159b20a4223, type: 3}
   buyAmount: 1
+  startingLandCount: 3
+  priceIncreasePerLand: 250

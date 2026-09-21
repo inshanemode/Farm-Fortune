@@ -15,4 +15,4 @@ MonoBehaviour:
   id: 6
   itemName: Blueberry
   itemIcon: {fileID: 21300000, guid: a1407d4cdfde1cf41ae235331f62b9b5, type: 3}
-  sellPrice: 8
+  sellPrice: 10

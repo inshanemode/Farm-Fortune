@@ -13,7 +13,7 @@ public class GameplayManager : MonoBehaviour
     public int startWorker = 1;
     public int startLand = 3;
     public int startToolLevel = 1;
-    public int startMoney = 0;
+    public int startMoney = 200000;
 
     private float saveTime = 0;
 
@@ -21,12 +21,16 @@ public class GameplayManager : MonoBehaviour
 
     void Awake()
     {
-        if(Instance != null)
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
         Instance = this;
+
+        // Ensure Order and Production managers are attached
+        if (GetComponent<OrderManager>() == null) gameObject.AddComponent<OrderManager>();
+        if (GetComponent<ProductionManager>() == null) gameObject.AddComponent<ProductionManager>();
     }
 
     private void Start()
@@ -37,9 +41,9 @@ public class GameplayManager : MonoBehaviour
     private void Update()
     {
         saveTime += Time.deltaTime;
-        if(saveTime >= Global.DEFAULT_SAVE_TIME)
+        if (saveTime >= Global.DEFAULT_SAVE_TIME)
         {
-            Debug.Log("Saving game");
+            Debug.Log("[GameplayManager] Auto-saving game...");
             SaveGame();
             saveTime = 0;
         }
@@ -64,109 +68,255 @@ public class GameplayManager : MonoBehaviour
     private void OnPlayerStatUpdate(EventParam param)
     {
         OnPlayerStatUpdate eventParam = param as OnPlayerStatUpdate;
-        if (!eventParam.player.Equals(Player.main)) return;
-        if(eventParam.player.totalMoney >= moneyGoal && currentState != GameState.GAME_WIN_END)
+        if (eventParam == null || !eventParam.player.Equals(Player.main)) return;
+        if (eventParam.player.totalMoney >= moneyGoal && currentState != GameState.GAME_WIN_END)
         {
             SetState(GameState.GAME_WIN_END);
             SaveGame();
             return;
         }
-
     }
 
     public Vector2 GetRandomSpawn(bool random = true)
     {
+        if (workerRestPlace == null) return Vector2.zero;
         Vector2 direction = UnityEngine.Random.insideUnitSphere.normalized;
-        return (Vector2)workerRestPlace.transform.position + (random ? direction * 3.5f + direction * UnityEngine.Random.Range(0, 1) : Vector2.zero);
+        return (Vector2)workerRestPlace.transform.position + (random ? direction * 3.5f + direction * UnityEngine.Random.Range(0f, 1f) : Vector2.zero);
     }
 
     public void SaveGame()
     {
-        //Will have to implement encrypt IO system but I dont have time lol
-        PlayerPrefs.SetInt("Init", 1);
-        PlayerPrefs.SetInt("state", (int)currentState);
-        PlayerPrefs.SetInt("money", Player.main.totalMoney);
-        PlayerPrefs.SetInt("land", Player.main.landManager.availableLands.Count);
-        PlayerPrefs.SetInt("worker", Player.main.totalWorker);
-        PlayerPrefs.SetInt("tool", Player.main.toolLevel);
-        PlayerPrefs.SetString("time", DateTime.Now.Ticks.ToString());
-        for (int i = 0; i < Player.main.landManager.availableLands.Count; i++)
+        if (Player.main == null) return;
+
+        SaveData data = new SaveData();
+        data.saveVersion = SaveSystem.CURRENT_SAVE_VERSION;
+        data.gameState = (int)currentState;
+
+        // 1. Player Data
+        data.playerData.money = Player.main.totalMoney;
+        data.playerData.totalLand = Player.main.landManager != null ? Player.main.landManager.availableLands.Count : Player.main.totalLand;
+        data.playerData.totalWorker = Player.main.totalWorker;
+        data.playerData.toolLevel = Player.main.toolLevel;
+        data.playerData.workerUpgradeLevel = Player.main.workerUpgradeLevel;
+        data.playerData.workerSpeedMultiplier = Player.main.workerSpeedMultiplier;
+        data.playerData.workerEfficiencyMultiplier = Player.main.workerEfficiencyMultiplier;
+        data.playerData.unlockedCrops = new List<int>(Player.main.unlockedCrops);
+
+        // Inventory
+        if (Player.main.inventory != null && Player.main.inventory.items != null)
         {
-            Land land = Player.main.landManager.availableLands[i];
-            Item seedItem = ItemManager.GetSeedFromPlant(land.entityData);
-            if (land.IsLandEmpty() || seedItem == null)
+            foreach (KeyValuePair<Item, int> pair in Player.main.inventory.items)
             {
-                PlayerPrefs.SetInt($"land_{i}_flag", 0);
-                continue;
+                if (pair.Key != null && pair.Value > 0)
+                {
+                    data.playerData.inventory.Add(new InventoryItemSaveData(pair.Key.id, pair.Value));
+                }
             }
-            PlayerPrefs.SetInt($"land_{i}_flag", 1);
-            PlayerPrefs.SetInt($"land_{i}_seed", seedItem.id);
-            PlayerPrefs.SetFloat($"land_{i}_liveTime", land.liveTime);
-            PlayerPrefs.SetFloat($"land_{i}_harvestTime", land.harvestTime);
         }
 
-        PlayerPrefs.SetInt($"item_count", Player.main.inventory.items.Keys.Count);
-        int index = 0;
-        foreach (Item item in Player.main.inventory.items.Keys)
+        // 2. Farmlands
+        if (Player.main.landManager != null)
         {
-            PlayerPrefs.SetInt($"item_{index}_id", item.id);
-            PlayerPrefs.SetInt($"item_{index}_amount", Player.main.inventory.items[item]);
-            index++;
+            for (int i = 0; i < Player.main.landManager.availableLands.Count; i++)
+            {
+                Land land = Player.main.landManager.availableLands[i];
+                FarmLandSaveData landSave = new FarmLandSaveData();
+                landSave.landIndex = i;
+                landSave.stateName = land.CurrentStateName;
+
+                Item seedItem = ItemManager.GetSeedFromPlant(land.entityData);
+                if (!land.IsLandEmpty() && seedItem != null)
+                {
+                    landSave.isOccupied = true;
+                    landSave.seedId = seedItem.id;
+                    landSave.liveTime = land.liveTime;
+                    landSave.harvestTime = land.harvestTime;
+                }
+                else
+                {
+                    landSave.isOccupied = false;
+                    landSave.seedId = -1;
+                }
+                data.farmLandData.Add(landSave);
+            }
         }
+
+        // 3. Workers
+        if (Player.main.workerManager != null)
+        {
+            IReadOnlyList<WorkerEntity> workers = Player.main.workerManager.Workers;
+            for (int i = 0; i < workers.Count; i++)
+            {
+                WorkerEntity worker = workers[i];
+                if (worker == null) continue;
+
+                WorkerSaveData wData = new WorkerSaveData();
+                wData.workerIndex = i;
+                wData.currentTask = (int)worker.CurrentTask;
+                wData.selectedSeedId = worker.SelectedSeed != null ? worker.SelectedSeed.id : -1;
+                wData.posX = worker.transform.position.x;
+                wData.posY = worker.transform.position.y;
+                wData.assignedLandIndex = (worker.currentLand != null && Player.main.landManager != null)
+                    ? Player.main.landManager.availableLands.IndexOf(worker.currentLand)
+                    : -1;
+                wData.speed = worker.speed;
+                wData.workTime = worker.workTime;
+                wData.stateName = worker.CurrentStateName;
+                wData.upgradeLevel = Player.main.workerUpgradeLevel;
+
+                data.workerData.Add(wData);
+            }
+        }
+
+        // 4. Orders
+        if (OrderManager.Instance != null)
+        {
+            data.orderData = OrderManager.Instance.GetSaveData();
+        }
+
+        // 5. Production
+        if (ProductionManager.Instance != null)
+        {
+            data.productionData = ProductionManager.Instance.GetSaveData();
+        }
+
+        // 6. Goals
+        if (GoalManager.Instance != null)
+        {
+            data.goalData = GoalManager.Instance.GetSaveData();
+        }
+
+        // 7. Tutorial
+        if (TutorialManager.Instance != null)
+        {
+            data.tutorialData = TutorialManager.Instance.GetSaveData();
+        }
+
+        SaveSystem.Save(data);
     }
 
     public void LoadGame()
     {
-        int init = PlayerPrefs.GetInt("Init");
-        if (init < 1) {
-            Debug.Log("No save file, loading new game..");
+        SaveData saveData = SaveSystem.Load();
+        if (saveData == null)
+        {
+            Debug.Log("[GameplayManager] No save file found or new game requested. Starting NEW GAME...");
             SetState(GameState.NEW_GAME);
             return;
         }
 
-        int state = PlayerPrefs.GetInt("state");
-        currentState = (GameState)state == GameState.NEW_GAME ? GameState.LOAD_GAME : (GameState)state; 
+        Debug.Log($"[GameplayManager] Loading save game (v{saveData.saveVersion})...");
+        currentState = GameState.LOAD_GAME;
 
-        int money = PlayerPrefs.GetInt("money");
-        Player.main.totalMoney = money;
-        int land = PlayerPrefs.GetInt("land");
-        Player.main.totalLand = land;
-        int worker = PlayerPrefs.GetInt("worker");
-        Player.main.totalWorker = worker;
-        int toolLevel = PlayerPrefs.GetInt("tool");
-        Player.main.toolLevel = toolLevel;
-
-        long savedTime = DateTime.Now.Ticks - long.Parse(PlayerPrefs.GetString("time"));
-        int secondsPassed = (int)Mathf.Abs(savedTime/TimeSpan.TicksPerSecond > int.MaxValue ? int.MaxValue : savedTime/TimeSpan.TicksPerSecond);
-        
+        // 1. Player Data - PRESERVE SAVED MONEY!
+        Player.main.totalMoney = saveData.playerData.money;
+        Player.main.totalLand = saveData.playerData.totalLand;
+        Player.main.totalWorker = saveData.playerData.totalWorker;
+        Player.main.toolLevel = saveData.playerData.toolLevel;
+        Player.main.workerUpgradeLevel = saveData.playerData.workerUpgradeLevel;
+        Player.main.workerSpeedMultiplier = saveData.playerData.workerSpeedMultiplier > 0 ? saveData.playerData.workerSpeedMultiplier : 1.0f;
+        Player.main.workerEfficiencyMultiplier = saveData.playerData.workerEfficiencyMultiplier > 0 ? saveData.playerData.workerEfficiencyMultiplier : 1.0f;
+        Player.main.unlockedCrops = saveData.playerData.unlockedCrops != null ? new List<int>(saveData.playerData.unlockedCrops) : new List<int>();
         Player.main.UpdateStat();
-        
-        //Plant
-        for (int i = 0; i < Player.main.landManager.availableLands.Count; i++)
+
+        // 2. Inventory - CLEAR FIRST TO PREVENT DUPLICATION!
+        Player.main.inventory.ClearItems();
+        if (saveData.playerData.inventory != null)
         {
-            int flag = PlayerPrefs.GetInt($"land_{i}_flag");
-            if (flag <= 0) continue;
-            int seedID = PlayerPrefs.GetInt($"land_{i}_seed"); 
-            float liveTime = PlayerPrefs.GetFloat($"land_{i}_liveTime") + secondsPassed;
-            float harvestTime = PlayerPrefs.GetFloat($"land_{i}_harvestTime");
-
-            Land targetLand = Player.main.landManager.availableLands[i];
-            SeedItem seedItem = ItemManager.GetItem(seedID) as SeedItem;
-            if (seedItem == null) continue;
-
-            targetLand.GrowPlant(seedItem.seedData);
-            targetLand.liveTime = liveTime;
-            targetLand.harvestTime = harvestTime;
+            foreach (InventoryItemSaveData itemData in saveData.playerData.inventory)
+            {
+                if (itemData.itemId >= 0 && itemData.amount > 0)
+                {
+                    Player.main.inventory.AddItem(itemData.itemId, itemData.amount);
+                }
+            }
         }
-        //Item
-        int itemCount = PlayerPrefs.GetInt("item_count");
-        for(int i = 0; i < itemCount; i++)
+
+        // 3. Time elapsed
+        long timeDiff = DateTime.UtcNow.Ticks - saveData.timestamp;
+        int secondsPassed = (int)Mathf.Abs(timeDiff / TimeSpan.TicksPerSecond > int.MaxValue ? int.MaxValue : timeDiff / TimeSpan.TicksPerSecond);
+
+        // 4. Farmlands
+        if (saveData.farmLandData != null && Player.main.landManager != null)
         {
-            int id = PlayerPrefs.GetInt($"item_{i}_id");
-            int amount = PlayerPrefs.GetInt($"item_{i}_amount");
-            Item item = ItemManager.GetItem(id);
-            if (item == null) continue;
-            Player.main.inventory.AddItem(id, amount);
+            for (int i = 0; i < saveData.farmLandData.Count; i++)
+            {
+                FarmLandSaveData landSave = saveData.farmLandData[i];
+                if (landSave.landIndex < 0 || landSave.landIndex >= Player.main.landManager.availableLands.Count) continue;
+                Land targetLand = Player.main.landManager.availableLands[landSave.landIndex];
+
+                if (!landSave.isOccupied || landSave.seedId < 0) continue;
+
+                SeedItem seedItem = ItemManager.GetItem(landSave.seedId) as SeedItem;
+                if (seedItem == null || seedItem.seedData == null) continue;
+
+                targetLand.GrowPlant(seedItem.seedData);
+                float totalLiveTime = landSave.liveTime + secondsPassed;
+                targetLand.liveTime = totalLiveTime;
+                targetLand.harvestTime = landSave.harvestTime;
+
+                if (totalLiveTime - seedItem.seedData.timeToHarvest >= seedItem.seedData.timeToDecompose)
+                {
+                    targetLand.ChangeState("LandDecomposeState");
+                }
+                else if (landSave.stateName == "LandDecomposeState")
+                {
+                    targetLand.ChangeState("LandDecomposeState");
+                }
+                else if (totalLiveTime >= seedItem.seedData.timeToHarvest)
+                {
+                    targetLand.farmEntity?.UpdateStage(1f);
+                }
+                else
+                {
+                    targetLand.farmEntity?.UpdateStage(targetLand.GetProgress());
+                }
+            }
+        }
+
+        // 5. Workers
+        if (saveData.workerData != null && Player.main.workerManager != null)
+        {
+            IReadOnlyList<WorkerEntity> workers = Player.main.workerManager.Workers;
+            for (int i = 0; i < saveData.workerData.Count && i < workers.Count; i++)
+            {
+                WorkerSaveData wData = saveData.workerData[i];
+                WorkerEntity worker = workers[i];
+                if (worker == null) continue;
+
+                Land assignedLand = null;
+                if (wData.assignedLandIndex >= 0 && wData.assignedLandIndex < Player.main.landManager.availableLands.Count)
+                {
+                    assignedLand = Player.main.landManager.availableLands[wData.assignedLandIndex];
+                }
+
+                worker.RestoreFromSave(wData, assignedLand);
+            }
+            Player.main.ApplyWorkerUpgrades();
+        }
+
+        // 6. Orders
+        if (OrderManager.Instance != null && saveData.orderData != null)
+        {
+            OrderManager.Instance.LoadOrderData(saveData.orderData);
+        }
+
+        // 7. Production
+        if (ProductionManager.Instance != null && saveData.productionData != null)
+        {
+            ProductionManager.Instance.LoadProductionData(saveData.productionData);
+        }
+
+        // 8. Goals
+        if (GoalManager.Instance != null && saveData.goalData != null)
+        {
+            GoalManager.Instance.LoadSaveData(saveData.goalData);
+        }
+
+        // 9. Tutorial
+        if (TutorialManager.Instance != null && saveData.tutorialData != null)
+        {
+            TutorialManager.Instance.LoadSaveData(saveData.tutorialData);
         }
     }
 
@@ -176,11 +326,12 @@ public class GameplayManager : MonoBehaviour
         OnGameStateChange stateEvent = new OnGameStateChange(this, state);
         EventManager.TriggerEvent(stateEvent);
     }
+
 #if UNITY_EDITOR
     [ContextMenu("Clear Data")]
     public void ClearData()
     {
-        PlayerPrefs.SetInt("Init", 0);
+        SaveSystem.ClearSave();
     }
 #endif
 }

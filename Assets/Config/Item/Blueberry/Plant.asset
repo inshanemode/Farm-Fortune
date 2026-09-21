@@ -16,7 +16,7 @@ MonoBehaviour:
   harvestItem: {fileID: 11400000, guid: 6eea78eafb0696449a4eed159cc6d2fd, type: 2}
   harvestItemAmount: 1
   timeToHarvest: 5
-  totalHarvest: 40
+  totalHarvest: 8
   timeToDecompose: 450
   plantSprites:
   - {fileID: 124494952, guid: f8818ad4eb432334997d0f37fcfe7a23, type: 3}

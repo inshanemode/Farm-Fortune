@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c499ac2df4788f409d70dd11bdeb6f3, type: 3}
   m_Name: ShopItem
   m_EditorClassIdentifier: 
-  buyPrice: 30
+  buyPrice: 360
   item: {fileID: 11400000, guid: b43b8253d0e5de3499e388416a6a021d, type: 2}
   buyAmount: 10

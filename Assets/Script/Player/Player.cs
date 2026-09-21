@@ -11,11 +11,19 @@ public class Player : MonoBehaviour
     public Inventory inventory;
     [HideInInspector]
     public LandManager landManager;
+    [HideInInspector]
+    public WorkerManager workerManager;
 
     public int totalMoney = 0;
     public int totalWorker = 1;
     public int totalLand = 3;
     public int toolLevel = 1;
+
+    [Header("Upgrades")]
+    public int workerUpgradeLevel = 1;
+    public float workerSpeedMultiplier = 1.0f;
+    public float workerEfficiencyMultiplier = 1.0f;
+    public List<int> unlockedCrops = new List<int>();
 
     public int totalWorkingWorker = 0;
 
@@ -26,6 +34,7 @@ public class Player : MonoBehaviour
     {
         inventory = GetComponent<Inventory>();
         landManager = GetComponent<LandManager>();
+        workerManager = GetComponent<WorkerManager>();
         if (isMainPlayer)
         {
             if(main != null)
@@ -47,6 +56,18 @@ public class Player : MonoBehaviour
     {
         OnPlayerStatUpdate updateEvent = new OnPlayerStatUpdate(this);
         EventManager.TriggerEvent(updateEvent);
+    }
+
+    public void ApplyWorkerUpgrades()
+    {
+        if (workerManager == null) return;
+        foreach (WorkerEntity worker in workerManager.Workers)
+        {
+            if (worker != null)
+            {
+                worker.ApplyUpgrades(workerSpeedMultiplier, workerEfficiencyMultiplier);
+            }
+        }
     }
 
     public bool HasMoney(int amount)
@@ -75,6 +96,11 @@ public class Player : MonoBehaviour
         totalWorker += amount;
         totalWorker = Mathf.Max(0, totalWorker);
         UpdateStat();
+        if (amount > 0)
+        {
+            TutorialManager.Instance?.OnWorkerHired();
+            GoalManager.Instance?.OnWorkerHired();
+        }
         return totalWorker;
     }
     public int AddWorkingWorker(int amount)
@@ -90,6 +116,11 @@ public class Player : MonoBehaviour
         totalLand += amount;
         totalLand = Mathf.Max(0, totalLand);
         UpdateStat();
+        if (amount > 0)
+        {
+            TutorialManager.Instance?.OnLandPurchased();
+            GoalManager.Instance?.OnLandPurchased();
+        }
         return totalLand;
     }
 

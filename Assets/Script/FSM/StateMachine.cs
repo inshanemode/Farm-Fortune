@@ -9,6 +9,8 @@ public class StateMachine : MonoBehaviour
     protected string defaultState = "IdleState";
     protected List<BaseState> stateList = new List<BaseState>();
 
+    public string CurrentStateName => currentState != null ? currentState.name : defaultState;
+
     protected virtual void Start()
     {
         if(currentState == null) ResetState();
